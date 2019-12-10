@@ -7,14 +7,15 @@ Private Sub btnBrowse_Click()
     diag.Title = "Please select an Excel Spreadsheet"
     diag.Filters.Clear
     diag.Filters.Add "Excel Spreadsheets", "*.xls, *.xlsx"
-    
-    If diag.Show Then
-        For Each item In diag.SelectedItems
-            Me.txtFileName = item
-        Next
+    If FSO.FileExists(Nz(diag.SelectedItems, "")) Then
+        ExcelImport.ImportExcelSpreadsheet diag.SelectedItems, FSO.GetFileName(Me.txtFileName)
+    Else
+        MsgBox "File not found!"
     End If
     
 End Sub
+
+    
 
 Private Sub btnImportSpreadsheet_Click()
     Dim FSO As New FileSystemObject
@@ -25,9 +26,17 @@ Private Sub btnImportSpreadsheet_Click()
     End If
     
     If FSO.FileExists(Nz(Me.txtFileName, "")) Then
-        ExcelImport.ImportExcelSpreadsheet Me.txtFileName, FSO.GetFileName(Me.txtFileName)
+        ExcelImport.ImportExcelSpreadsheet diag.SelectedItems, FSO.GetFileName(Me.txtFileName)
     Else
         MsgBox "File not found!"
+    End If
+    
+End Sub
+
+//If diag.Show Then
+        For Each item In diag.SelectedItems
+            Me.txtFileName = item
+        Next
     End If
     
 End Sub
