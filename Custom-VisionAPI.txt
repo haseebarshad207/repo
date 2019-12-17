@@ -1,0 +1,66 @@
+https://docs.microsoft.com/en-gb/azure/cognitive-services/custom-vision-service/python-tutorial#get-the-sample-images
+
+##COMPLETE CODE FOR NEW PROJECT
+from azure.cognitiveservices.vision.customvision.training import CustomVisionTrainingClient
+from azure.cognitiveservices.vision.customvision.training.models import ImageFileCreateEntry
+
+ENDPOINT = "https://westus2.api.cognitive.microsoft.com/"
+
+# Replace with a valid key
+training_key = "143d4f715e994fb08a40927956d74618"
+prediction_key = "116b6fb3484a460b9859e0832c97d4ac"
+prediction_resource_id = "/subscriptions/8254cfcc-22cc-4e2f-867f-1235ba2ea380/resourceGroups/learn-3bc25b8d-b304-42ed-9dc9-9170bf43373a/providers/Microsoft.CognitiveServices/accounts/Myartwork-Pred"
+
+publish_iteration_name = "classifyModel"
+
+trainer = CustomVisionTrainingClient(training_key, endpoint=ENDPOINT)
+
+# Create a new project
+print ("Creating project...")
+project = trainer.create_project("My New Project")
+##COMPLETE CODE FOR NEW PROJECT
+
+# Make two tags in the new project
+hemlock_tag = trainer.create_tag(project.id, "Hemlock")
+cherry_tag = trainer.create_tag(project.id, "Japanese Cherry")
+
+#Upload images to the project
+
+base_image_url = r"C:\Users\muhammad.haseeb\Desktop\AI Training Mode"
+
+print("Adding images...")
+
+image_list = []
+
+for image_num in range(1, 6):
+    file_name = "hemlock_{}.jpg".format(image_num)
+    with open(base_image_url + "\\images\Hemlock\\" + file_name, "rb") as image_contents:
+        image_list.append(ImageFileCreateEntry(name=file_name, contents=image_contents.read(), tag_ids=[hemlock_tag.id]))
+
+for image_num in range(1, 6):
+    file_name = "japanese_cherry_{}.jpg".format(image_num)
+    with open(base_image_url + "\\images\Japanese Cherry\\" + file_name, "rb") as image_contents:
+        image_list.append(ImageFileCreateEntry(name=file_name, contents=image_contents.read(), tag_ids=[cherry_tag.id]))
+
+upload_result = trainer.create_images_from_files(project.id, images=image_list)
+if not upload_result.is_batch_successful:
+    print("Image batch upload failed.")
+    for image in upload_result.images:
+        print("Image status: ", image.status)
+    exit(-1)
+
+
+#TRAINING
+
+import time
+
+print ("Training...")
+iteration = trainer.train_project(project.id)
+while (iteration.status != "Completed"):
+    iteration = trainer.get_iteration(project.id, iteration.id)
+    print ("Training status: " + iteration.status)
+    time.sleep(1)
+
+# The iteration is now trained. Publish it to the project endpoint
+trainer.publish_iteration(project.id, iteration.id, publish_iteration_name, prediction_resource_id)
+print ("Done!")
